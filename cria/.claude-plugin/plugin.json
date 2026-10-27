@@ -1,1 +1,1 @@
-{ "name": "cria", "version": "0.1.0", "description": "Floating pixel mascot at the bottom right that reacts to what Claude is doing", "types": "./types/index.d.ts" }
+{ "name": "cria", "version": "0.1.0", "description": "Floating pixel mascot band that reacts to what Claude is doing, plus the Taskflow pane for plans, tasks and PRs", "types": "./types/index.d.ts" }

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Claude Code mods built around the Cria pixel mascot: `cria/` is the floating mascot band with session info; `panel/` is the taskflow pane sources.
+Claude Code mod built around the Cria pixel mascot: `cria/` is the one mod, with the floating mascot band (session info) and the Taskflow pane (plans, tasks, PRs).
 
 ## Workflow
 
