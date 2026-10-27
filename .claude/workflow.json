@@ -2,9 +2,9 @@
   "projectsDir": "docs/projects",
   "planTemplates": "plugin",
   "gates": {
-    "lint": "claude-personal plugin validate cria",
+    "lint": "claude-personal plugin validate .",
     "types": "npm run check-types",
-    "unit": "claude-personal plugin test cria"
+    "unit": "claude-personal plugin test ."
   },
   "e2eTriggerPaths": [],
   "docsChecklist": [
@@ -13,7 +13,7 @@
   "diagrams": { "maintain": false },
   "pullRequests": {
     "maxLines": 400,
-    "excludeFromCount": ["**/*.test.ts", "**/*.test.tsx", "**/.claude-plugin/types/**", "**/*-frames.ts", "cria/hooks/frames.ts"],
+    "excludeFromCount": ["**/*.test.ts", "**/*.test.tsx", "**/.claude-plugin/types/**", "**/*-frames.ts"],
     "branchPrefix": "",
     "titlePrefix": "",
     "labels": {
