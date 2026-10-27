@@ -38,8 +38,10 @@ async function refreshInfo($: EngineInterface) {
   const [model, cwd, usage] = await Promise.all([$.session.model(), $.session.cwd(), $.session.usage()])
   const branch = await currentBranch($, cwd)
   const dirty = branch ? await isDirty($, cwd) : false
+  const previous = await read($, info)
   const next: Info = {
     model: shortModel(model),
+    effort: previous?.effort ?? null,
     dir: cwd.split('/').pop() ?? cwd,
     branch,
     dirty,
@@ -157,6 +159,12 @@ export const register: Register = on => {
       await setWaiting($, { dialog: false })
     }
   }).catch(passThrough)
+
+  on('turn.step', async function* ($, e, next) {
+    if (!e.agentId) await update($, info, i => i && { ...i, effort: e.effort ?? null })
+
+    return yield* next(e)
+  })
 
   on('turn.complete', async ($, e, next) => {
     if (!e.agentId) {

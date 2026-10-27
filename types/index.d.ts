@@ -1,5 +1,6 @@
 export type Info = {
   model: string
+  effort: string | number | null
   dir: string
   branch: string | null
   dirty: boolean

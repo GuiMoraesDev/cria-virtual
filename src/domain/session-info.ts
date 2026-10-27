@@ -14,6 +14,17 @@ export function shortModel(id: string): string {
   return m ? `${m[1]}-${m[2]}.${m[3]}` : s;
 }
 
+const compact = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+export function modelTag(model: string, effort: string | number | null): string {
+  if (effort === null) return model;
+
+  return `${model} · ${typeof effort === "number" ? compact.format(effort) : effort}`;
+}
+
 export function humanDuration(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   if (s < 60) return `${s}s`;
