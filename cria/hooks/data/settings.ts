@@ -7,7 +7,7 @@ import { updateWorkflowEnv } from '../domain/workflow-env'
 import type { PlanSourceSettings } from '../domain/workflow-env'
 import { loadBoard, readObsidianVaults, readPlanDir, readWorkflowEnv, repoRoot } from './board'
 
-const settings = atom({ plugin: 'taskflow', key: 'settings' } as const, null)
+const settings = atom({ plugin: 'cria', key: 'settings' } as const, null)
 
 export async function loadSettings($: EngineInterface): Promise<PlanSettings> {
   const root = await repoRoot($)

@@ -1,0 +1,31 @@
+{
+  "projectsDir": "docs/projects",
+  "planTemplates": "plugin",
+  "gates": {
+    "lint": "claude-personal plugin validate cria",
+    "types": "npm run check-types",
+    "unit": "claude-personal plugin test cria"
+  },
+  "e2eTriggerPaths": [],
+  "docsChecklist": [
+    { "path": "CLAUDE.md", "owns": "the workflow, the commands, the code standards" }
+  ],
+  "diagrams": { "maintain": false },
+  "pullRequests": {
+    "maxLines": 400,
+    "excludeFromCount": ["**/*.test.ts", "**/*.test.tsx", "**/.claude-plugin/types/**", "**/*-frames.ts", "cria/hooks/frames.ts"],
+    "branchPrefix": "",
+    "titlePrefix": "",
+    "labels": {
+      "always": [],
+      "byType": { "fix": ["bug"], "feat": ["enhancement"], "docs": ["documentation"] },
+      "onMissing": "ask"
+    },
+    "assignOwner": true,
+    "stack": null,
+    "parallel": false
+  },
+  "aiSignature": false,
+  "commitTypes": ["feat", "fix", "refactor", "chore", "docs", "test"],
+  "models": { "deep": "opus", "surface": "sonnet", "mechanical": "haiku" }
+}
