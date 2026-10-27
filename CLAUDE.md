@@ -35,9 +35,10 @@ The tier binds the subagent that makes the change, and the mapping lives in
 `.claude/workflow.json`. A task applied on the wrong model is a deviation for the
 session log even when the diff is fine.
 
-Gates before every commit: `claude-personal plugin validate .`,
-`npm run check-types`, `claude-personal plugin test .`. There is no
-pre-commit hook, so running them is on you.
+Gates before every commit: `npm run check` - the version check, then
+`claude-personal plugin validate .`, `npm run check-types`,
+`claude-personal plugin test .`. The husky pre-commit hook runs it; the
+version check wants `.claude-plugin/plugin.json` above origin/main's.
 
 Commit messages and pull requests carry no AI signature - no `Co-Authored-By`
 trailer for an AI, no "Generated with Claude Code" line - unless
@@ -64,6 +65,7 @@ while ⚠️ critical leads with what the wrong answer costs.
 ## Commands
 
 ```bash
+npm run check                          # the pre-commit gates, all of them
 claude-personal plugin validate .      # manifest + hooks module checks
 npm run check-types                    # type-check (needs the engine-laid .claude-plugin/types)
 claude-personal plugin test .          # *.test.ts(x) under the mod

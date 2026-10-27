@@ -2,23 +2,44 @@
   "projectsDir": "docs/projects",
   "planTemplates": "plugin",
   "gates": {
+    "version": "npm run version:check",
     "lint": "claude-personal plugin validate .",
     "types": "npm run check-types",
     "unit": "claude-personal plugin test ."
   },
   "e2eTriggerPaths": [],
   "docsChecklist": [
-    { "path": "CLAUDE.md", "owns": "the workflow, the commands, the code standards" }
+    {
+      "path": "CLAUDE.md",
+      "owns": "the workflow, the commands, the code standards"
+    }
   ],
-  "diagrams": { "maintain": false },
+  "diagrams": {
+    "maintain": false
+  },
   "pullRequests": {
     "maxLines": 400,
-    "excludeFromCount": ["**/*.test.ts", "**/*.test.tsx", "**/.claude-plugin/types/**", "**/*-frames.ts"],
+    "excludeFromCount": [
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/.claude-plugin/types/**",
+      "**/*-frames.ts"
+    ],
     "branchPrefix": "",
     "titlePrefix": "",
     "labels": {
       "always": [],
-      "byType": { "fix": ["bug"], "feat": ["enhancement"], "docs": ["documentation"] },
+      "byType": {
+        "fix": [
+          "bug"
+        ],
+        "feat": [
+          "enhancement"
+        ],
+        "docs": [
+          "documentation"
+        ]
+      },
       "onMissing": "ask"
     },
     "assignOwner": true,
@@ -26,6 +47,17 @@
     "parallel": false
   },
   "aiSignature": false,
-  "commitTypes": ["feat", "fix", "refactor", "chore", "docs", "test"],
-  "models": { "deep": "opus", "surface": "sonnet", "mechanical": "haiku" }
+  "commitTypes": [
+    "feat",
+    "fix",
+    "refactor",
+    "chore",
+    "docs",
+    "test"
+  ],
+  "models": {
+    "deep": "opus",
+    "surface": "sonnet",
+    "mechanical": "haiku"
+  }
 }
