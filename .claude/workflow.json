@@ -19,9 +19,14 @@
   },
   "pullRequests": {
     "maxLines": 400,
-    "excludeFromCount": [
+    "maxTotalLines": 600,
+    "codeExcludes": [
       "**/*.test.ts",
       "**/*.test.tsx",
+      "CLAUDE.md",
+      "docs/**"
+    ],
+    "excludeFromCount": [
       "**/.claude-plugin/types/**",
       "**/*-frames.ts",
       "**/package-lock.json"
