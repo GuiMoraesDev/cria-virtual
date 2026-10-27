@@ -14,13 +14,13 @@ import {
   trashEntryName,
 } from '../domain/trash'
 
-const board = atom({ plugin: 'taskflow', key: 'board' } as const, null)
-const selected = atom({ plugin: 'taskflow', key: 'selected' } as const, null)
-const pendingDelete = atom({ plugin: 'taskflow', key: 'pendingDelete' } as const, null)
-const notice = atom({ plugin: 'taskflow', key: 'notice' } as const, null)
+const board = atom({ plugin: 'cria', key: 'board' } as const, null)
+const selected = atom({ plugin: 'cria', key: 'selected' } as const, null)
+const pendingDelete = atom({ plugin: 'cria', key: 'pendingDelete' } as const, null)
+const notice = atom({ plugin: 'cria', key: 'notice' } as const, null)
 // null while the trash view is closed, so loadBoard only lists the trash when someone is looking at it.
-const trashEntries = atom({ plugin: 'taskflow', key: 'trashEntries' } as const, null)
-const pendingClear = atom({ plugin: 'taskflow', key: 'pendingClear' } as const, false)
+const trashEntries = atom({ plugin: 'cria', key: 'trashEntries' } as const, null)
+const pendingClear = atom({ plugin: 'cria', key: 'pendingClear' } as const, false)
 
 export async function repoRoot($: EngineInterface) {
   const toplevel = await $.process.run(['git', 'rev-parse', '--show-toplevel'])

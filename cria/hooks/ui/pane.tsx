@@ -17,21 +17,21 @@ import { PlanList } from './components/organisms/PlanList'
 import { TrashView } from './components/organisms/TrashView'
 import type { Ui } from './components/ui'
 
-const board = atom({ plugin: 'taskflow', key: 'board' } as const, null)
-const selected = atom({ plugin: 'taskflow', key: 'selected' } as const, null)
-const pendingDelete = atom({ plugin: 'taskflow', key: 'pendingDelete' } as const, null)
-const notice = atom({ plugin: 'taskflow', key: 'notice' } as const, null)
-const trashEntries = atom({ plugin: 'taskflow', key: 'trashEntries' } as const, null)
-const pendingClear = atom({ plugin: 'taskflow', key: 'pendingClear' } as const, false)
-const animationStep = atom({ plugin: 'taskflow', key: 'animationStep' } as const, 0)
-const isMenuOpen = atom({ plugin: 'taskflow', key: 'isMenuOpen' } as const, false)
-const waiting = atom({ plugin: 'taskflow', key: 'waiting' } as const, {
+const board = atom({ plugin: 'cria', key: 'board' } as const, null)
+const selected = atom({ plugin: 'cria', key: 'selected' } as const, null)
+const pendingDelete = atom({ plugin: 'cria', key: 'pendingDelete' } as const, null)
+const notice = atom({ plugin: 'cria', key: 'notice' } as const, null)
+const trashEntries = atom({ plugin: 'cria', key: 'trashEntries' } as const, null)
+const pendingClear = atom({ plugin: 'cria', key: 'pendingClear' } as const, false)
+const animationStep = atom({ plugin: 'cria', key: 'step' } as const, 0)
+const isMenuOpen = atom({ plugin: 'cria', key: 'isMenuOpen' } as const, false)
+const waiting = atom({ plugin: 'cria', key: 'waiting' } as const, {
   dialog: false,
   permission: false,
   lastTurnAsked: false,
 })
-const tab = atom({ plugin: 'taskflow', key: 'tab' } as const, 'plans')
-const settings = atom({ plugin: 'taskflow', key: 'settings' } as const, null)
+const tab = atom({ plugin: 'cria', key: 'tab' } as const, 'plans')
+const settings = atom({ plugin: 'cria', key: 'settings' } as const, null)
 
 export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
   const ui = $.ui.resolve(e)
