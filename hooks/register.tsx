@@ -1,11 +1,10 @@
 import { atom, read, update } from 'claude-code'
 import type { Caught, EngineInterface, Register } from 'claude-code'
 
-import type { Info, Mood, SessionWait, Subagent, Task } from '../types'
+import type { Info, Mood, SessionWait } from '../types'
 import { quotaLabel, shortModel } from './domain/session-info'
 import { checkVerdict, promptSubmit, toolEnd, turnEnd } from './domain/session'
 import type { SessionState } from './domain/session'
-import { addTask, updateTask } from './domain/tasks'
 import { renderBand } from './ui/band'
 
 const DONE_RESET_MS = 4000
@@ -14,9 +13,6 @@ const DONE_RESET_MS = 4000
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
 const info = atom({ plugin: 'cria', key: 'info' } as const, null as Info | null)
-const agents = atom({ plugin: 'cria', key: 'agents' } as const, [] as Subagent[])
-const tasks = atom({ plugin: 'cria', key: 'tasks' } as const, [] as Task[])
-const todo = atom({ plugin: 'cria', key: 'todo' } as const, null as string | null)
 const isHidden = atom({ plugin: 'cria', key: 'isHidden' } as const, false)
 const waiting = atom({ plugin: 'cria', key: 'waiting' } as const, {
   dialog: false,
@@ -163,10 +159,7 @@ export const register: Register = on => {
   }).catch(passThrough)
 
   on('turn.complete', async ($, e, next) => {
-    const { agentId } = e
-    if (agentId) {
-      await update($, agents, list => list.filter(agent => agent.agentId !== agentId))
-    } else {
+    if (!e.agentId) {
       void refreshInfo($)
       resetTurn()
       const finished = generation
@@ -177,43 +170,6 @@ export const register: Register = on => {
         })
       }
     }
-
-    return next(e)
-  }).catch(passThrough)
-
-  // Subagents
-  on('agent.spawn', async ($, e, next) => {
-    const started = await next(e)
-    const { agentId } = started
-    if (agentId) {
-      const agent: Subagent = { agentId, type: e.subagentType || 'agent', model: shortModel(started.model) }
-      await update($, agents, list => [agent, ...list])
-    }
-
-    return started
-  }).catch(passThrough)
-
-  // Todos & tasks
-  on('tool.call', { tool: 'TodoWrite' }, async ($, e, next) => {
-    const active = e.todos.find(item => item.status === 'in_progress')
-    await update($, todo, () => active?.activeForm ?? null)
-
-    return next(e)
-  }).catch(passThrough)
-
-  on('tool.call', { tool: 'TaskCreate' }, async ($, e, next) => {
-    const created = await next(e)
-    if ('result' in created && created.result && !created.isError) {
-      const task: Task = { id: created.result.task.id, label: e.activeForm ?? e.subject, status: 'pending' }
-      await update($, tasks, list => addTask(list, task))
-    }
-
-    return created
-  }).catch(passThrough)
-
-  on('tool.call', { tool: 'TaskUpdate' }, async ($, e, next) => {
-    const { taskId, status, activeForm, subject } = e
-    await update($, tasks, list => updateTask(list, { taskId, status, activeForm, subject }))
 
     return next(e)
   }).catch(passThrough)

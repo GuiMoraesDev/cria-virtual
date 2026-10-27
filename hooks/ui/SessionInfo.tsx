@@ -1,6 +1,6 @@
 import type { ElementTable } from "claude-code";
 
-import type { Info, Subagent } from "../../types";
+import type { Info } from "../../types";
 import {
   humanDuration,
   meterBar,
@@ -13,44 +13,14 @@ type SessionInfoProps = {
   ui: ElementTable;
   details: Info | null;
   now: number;
-  running: Subagent[];
-  current: string | null;
 };
 
 export function SessionInfo({
   ui: { Box, Text },
   details,
   now,
-  running,
-  current,
 }: SessionInfoProps) {
-  const activity = [
-    running.length > 0 ? (
-      <Text key="agents">
-        <Text color="#C678DD">
-          ⚡{running.length > 1 ? running.length : ""}
-        </Text>{" "}
-        {running
-          .slice(0, 2)
-          .map(({ type, model }) => `${type}·${model}`)
-          .join(", ")}
-        {running.length > 2 && <Text dimColor> +{running.length - 2}</Text>}
-      </Text>
-    ) : null,
-    current ? (
-      <Text key="task" weight="bold">
-        {current}
-      </Text>
-    ) : null,
-  ];
-
-  if (!details) {
-    return (
-      <Box flexDirection="column" alignItems="flex-end" marginRight={1}>
-        {activity}
-      </Box>
-    );
-  }
+  if (!details) return null;
 
   return (
     <Box alignItems="flex-end" gap={2}>
@@ -97,8 +67,6 @@ export function SessionInfo({
           })}
         </Box>
       ) : null}
-
-      {activity}
     </Box>
   );
 }
