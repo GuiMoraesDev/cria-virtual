@@ -1,7 +1,8 @@
-import type { MascotCell } from '../../../domain/mascot'
-import type { Ui } from '../ui'
+import type { ElementTable } from 'claude-code'
 
-type MascotSpriteProps = { ui: Ui; cells: MascotCell[][] }
+import type { MascotCell } from '../domain/mascot'
+
+type MascotSpriteProps = { ui: ElementTable; cells: MascotCell[][] }
 
 export function MascotSprite({ ui: { Box, Text }, cells }: MascotSpriteProps) {
   return (

@@ -2,19 +2,14 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Info, Mood, SessionWait, Subagent, Task } from '../types'
-import { boardSignature, loadBoard } from './data/board'
 import { quotaLabel, shortModel } from './domain/session-info'
 import { checkVerdict, promptSubmit, toolEnd, turnEnd } from './domain/session'
 import type { SessionState } from './domain/session'
 import { renderBand } from './ui/band'
-import { renderPane } from './ui/pane'
 
-const PANE = 'taskflow'
-const PANE_TITLE = 'Taskflow'
-const WATCH_MS = 1000
 const DONE_RESET_MS = 4000
 
-// Same plugin/key refs as the ones ui/band.tsx and ui/pane.tsx read: the engine wants each file to declare the atoms it updates.
+// Same plugin/key refs as the ones ui/band.tsx reads: the engine wants each file to declare the atoms it updates.
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
 const info = atom({ plugin: 'cria', key: 'info' } as const, null as Info | null)
@@ -54,10 +49,6 @@ async function setWaiting($: EngineInterface, change: Partial<SessionWait>) {
   await update($, waiting, wait => ({ ...wait, ...change }))
 }
 
-async function openPane($: EngineInterface, focus = false) {
-  await $.ui.open({ id: PANE, title: PANE_TITLE, columns: 60, ...(focus ? { focus: true as const } : {}) })
-}
-
 export const register: Register = on => {
   // Bumped on every prompt and main turn end so a stale "done → idle" timer knows to skip.
   let generation = 0
@@ -68,39 +59,18 @@ export const register: Register = on => {
     $.clock.every(100, () => void update($, step, s => s + 1))
     await $.command.register({
       name: 'cria',
-      description: 'Show or hide the mascot and Taskflow pane; `board` opens the pane',
-      argumentHint: '[board]',
+      description: 'Show or hide the mascot band',
     })
     void refreshInfo($)
-    void loadBoard($)
-    if (!(await read($, isHidden))) void openPane($)
-
-    // Reload whenever a PROGRESS.md changes - mid-turn, from a subagent or from Obsidian - not only at turn end.
-    let lastSignature = ''
-    $.clock.every(WATCH_MS, async () => {
-      const signature = await boardSignature($)
-      if (signature === lastSignature) return
-      lastSignature = signature
-      await loadBoard($)
-    })
 
     return next(e)
   }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('command.run', { command: 'cria' }, async ($, e) => {
     const arg = e.args.trim()
-    if (arg === 'board') {
-      await update($, isHidden, () => false)
-      await loadBoard($)
-      await openPane($, true)
-
-      return { text: 'Taskflow pane opened.' }
-    }
-    if (arg) return { text: `Unknown argument "${arg}". Use /cria or /cria board.` }
+    if (arg) return { text: `Unknown argument "${arg}". Use /cria.` }
 
     const hidden = await update($, isHidden, h => !h)
-    if (hidden) await $.ui.close({ id: PANE })
-    else await openPane($)
 
     return { text: hidden ? 'Cria hidden' : 'Cria is back' }
   }).catch(($, e, next) => (next.called ? undefined : next(e)))
@@ -161,7 +131,6 @@ export const register: Register = on => {
   }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('turn.complete', async ($, e, next) => {
-    void loadBoard($)
     const { agentId } = e
     if (agentId) await update($, agents, list => list.filter(agent => agent.agentId !== agentId))
     if (!agentId) {
@@ -224,5 +193,4 @@ export const register: Register = on => {
   }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('ui.render', { component: 'AbovePrompt' }, renderBand)
-  on('ui.render', { component: 'Pane', requestId: PANE }, renderPane)
 }
