@@ -5,6 +5,7 @@ import type { Info, Mood, SessionWait, Subagent, Task } from '../types'
 import { quotaLabel, shortModel } from './domain/session-info'
 import { checkVerdict, promptSubmit, toolEnd, turnEnd } from './domain/session'
 import type { SessionState } from './domain/session'
+import { addTask, updateTask } from './domain/tasks'
 import { renderBand } from './ui/band'
 
 const DONE_RESET_MS = 4000
@@ -171,7 +172,7 @@ export const register: Register = on => {
     const created = await next(e)
     if ('result' in created && created.result && !created.isError) {
       const task: Task = { id: created.result.task.id, label: e.activeForm ?? e.subject, status: 'pending' }
-      await update($, tasks, list => [...list, task])
+      await update($, tasks, list => addTask(list, task))
     }
 
     return created
@@ -179,15 +180,7 @@ export const register: Register = on => {
 
   on('tool.call', { tool: 'TaskUpdate' }, async ($, e, next) => {
     const { taskId, status, activeForm, subject } = e
-    await update($, tasks, list =>
-      status === 'deleted'
-        ? list.filter(task => task.id !== taskId)
-        : list.map(task =>
-            task.id === taskId
-              ? { ...task, label: activeForm ?? subject ?? task.label, status: status ?? task.status }
-              : task,
-          ),
-    )
+    await update($, tasks, list => updateTask(list, { taskId, status, activeForm, subject }))
 
     return next(e)
   }).catch(($, e, next) => (next.called ? undefined : next(e)))
