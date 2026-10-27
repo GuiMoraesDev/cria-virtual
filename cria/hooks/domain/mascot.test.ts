@@ -75,6 +75,12 @@ test('each animation loops for its agreed number of steps', () => {
   expect(loop('loading')).toBe(8)
 })
 
+test('the loading mood draws the spinner frame', () => {
+  for (let step = 0; step < 47; step++) {
+    expect(mascotFrame('loading', step)).toEqual(mascotSpinner(step))
+  }
+})
+
 test('a 🔄 task with a 👀 PR and no open question is asking', () => {
   expect(mascotMood([row('task', '🔄 in progress'), row('pr', '👀 in review')])).toBe('asking')
 })

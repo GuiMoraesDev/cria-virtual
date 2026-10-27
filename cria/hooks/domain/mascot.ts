@@ -4,7 +4,7 @@ import { MASCOT_ANIMATIONS, type MascotKeyframe } from './mascot-frames'
 import { isNeedsYou } from './attention'
 import { taskTotals } from './parse'
 
-export type MascotMood = 'idle' | 'working' | 'blocked' | 'asking' | 'done'
+export type MascotMood = 'idle' | 'working' | 'blocked' | 'asking' | 'done' | 'loading'
 
 const PALETTE: Record<string, string> = {
   A: '#00B4D8',
