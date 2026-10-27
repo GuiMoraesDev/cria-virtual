@@ -2,7 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { Hook, Register } from 'claude-code'
 
 import type { Info, Mood, Subagent, Task } from '../types'
-import { MASCOT_ANIMATIONS, type MascotKeyframe } from './frames'
+import { endsOnQuestion, mascotFrame } from './domain/mascot'
+import { MascotSprite } from './ui/components/atoms/MascotSprite'
 
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
@@ -11,22 +12,6 @@ const agents = atom({ plugin: 'cria', key: 'agents' } as const, [] as Subagent[]
 const tasks = atom({ plugin: 'cria', key: 'tasks' } as const, [] as Task[])
 const todo = atom({ plugin: 'cria', key: 'todo' } as const, null as string | null)
 const isHidden = atom({ plugin: 'cria', key: 'isHidden' } as const, false)
-
-const PALETTE: Record<string, string> = {
-  A: '#00B4D8', B: '#00B7BC', D: '#1B3137', E: '#D5DFE0', G: '#00BD74', K: '#11191C', M: '#8E2A20',
-  N: '#91513C', R: '#F36353', S: '#1F6D75', T: '#C6966D', W: '#FFFFFF', Y: '#FFBF36',
-}
-
-function keyframeAt(keyframes: MascotKeyframe[], at: number): string[] {
-  const loop = keyframes.reduce((total, { steps }) => total + steps, 0)
-  let elapsed = at % loop
-  for (const { steps, rows } of keyframes) {
-    if (elapsed < steps) return rows
-    elapsed -= steps
-  }
-
-  return keyframes[0]?.rows ?? []
-}
 
 const QUOTA_LABELS: Record<string, string> = { five_hour: 'session', seven_day: 'weekly' }
 
@@ -48,10 +33,6 @@ function humanDuration(ms: number): string {
 
 function meterColor(percent: number): string {
   return percent >= 80 ? '#F36353' : percent >= 65 ? '#FF8700' : percent >= 50 ? '#FFBF36' : '#00BD74'
-}
-
-function endsOnQuestion(text: string): boolean {
-  return /\?[\s*_`)"']*$/.test(text)
 }
 
 async function refreshInfo($: Parameters<Hook<'session.measure'>>[0]) {
@@ -190,25 +171,9 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (await read($, isHidden)) return next(e)
 
-    const { Box, Text } = $.ui.resolve(e)
-    const pixels = keyframeAt(MASCOT_ANIMATIONS[await read($, mood)], await read($, step))
-    const lines = []
-    for (let y = 0; y < pixels.length; y += 2) {
-      const upper = pixels[y] ?? ''
-      const lower = pixels[y + 1] ?? ''
-      lines.push(
-        <Text key={`row-${y}`}>
-          {[...upper].map((ch, x) => {
-            const top = PALETTE[ch]
-            const bottom = PALETTE[lower[x] ?? '.']
-            if (top) return <Text key={`px-${x}`} color={top} backgroundColor={bottom}>▀</Text>
-            if (bottom) return <Text key={`px-${x}`} color={bottom}>▄</Text>
-
-            return ' '
-          })}
-        </Text>,
-      )
-    }
+    const ui = $.ui.resolve(e)
+    const { Box, Text } = ui
+    const cells = mascotFrame(await read($, mood), await read($, step))
 
     const details = await read($, info)
     const now = await $.clock.now()
@@ -253,7 +218,9 @@ export const register: Register = on => {
     return (
       <Box flexDirection="row" justifyContent="flex-end" alignItems="center">
         <Box flexDirection="column" alignItems="flex-end" marginRight={1}>{rows}</Box>
-        <Box flexDirection="column" marginRight={1}>{lines}</Box>
+        <Box marginRight={1}>
+          <MascotSprite ui={ui} cells={cells} />
+        </Box>
       </Box>
     )
   })
