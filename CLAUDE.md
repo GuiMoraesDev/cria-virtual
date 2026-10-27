@@ -36,7 +36,7 @@ The tier binds the subagent that makes the change, and the mapping lives in
 session log even when the diff is fine.
 
 Gates before every commit: `npm run check` - the version check, then
-`claude-personal plugin validate .`, `npm run check-types`,
+`claude-personal plugin validate .`, `npm run check-types`, `npm run lint`,
 `claude-personal plugin test .`. The husky pre-commit hook runs it; the
 version check wants `.claude-plugin/plugin.json` above origin/main's.
 
@@ -68,6 +68,7 @@ while ⚠️ critical leads with what the wrong answer costs.
 npm run check                          # the pre-commit gates, all of them
 claude-personal plugin validate .      # manifest + hooks module checks
 npm run check-types                    # type-check (needs the engine-laid .claude-plugin/types)
+npm run lint                           # ESLint dead-code rules (typescript-eslint recommended)
 claude-personal plugin test .          # *.test.ts(x) under the mod
 ```
 
