@@ -69,8 +69,8 @@ Add the marketplace and install the plugin from inside Claude Code:
 
 ## Project Maintenance 👨‍🔧
 
-- `.claude-plugin/` holds the manifest and the marketplace entry, `hooks/` holds `register.tsx` plus the `domain/` logic and the `ui/` components, and `types/` holds the engine types.
-- `npm run check` runs the gates: the version check (`scripts/check-version.js`), plugin validation, the type check and the tests. The husky pre-commit hook runs it for you.
+- `.claude-plugin/` holds the manifest and the marketplace entry, `src/` holds `hooks.json` and `register.tsx` plus the `domain/` logic and the `ui/` components, and `types/` holds the engine types.
+- `npm run check` runs the gates: the version check (`.husky/scripts/check-version.js`), plugin validation, the type check and the tests. The husky pre-commit hook runs it for you.
 - The `version` in `.claude-plugin/plugin.json` must go above the one on `main` on every pull request, or the version check fails.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 - The workflow and the code rules live in [`CLAUDE.md`](CLAUDE.md).
