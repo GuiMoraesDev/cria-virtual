@@ -4,7 +4,7 @@
   "scripts": {
     "prepare": "husky",
     "check": "npm run version:check && npm run validate && npm run check-types && npm run test",
-    "version:check": "node scripts/check-version.js",
+    "version:check": "node .husky/scripts/check-version.js",
     "validate": "CLAUDE_CONFIG_DIR=$HOME/.claude-personal claude plugin validate .",
     "check-types": "tsc -p .",
     "test": "CLAUDE_CONFIG_DIR=$HOME/.claude-personal claude plugin test ."
