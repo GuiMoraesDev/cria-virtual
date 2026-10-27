@@ -1,12 +1,20 @@
-import { atom, update } from 'claude-code'
-import type { Hook, Register } from 'claude-code'
+import { atom, read, update } from 'claude-code'
+import type { EngineInterface, Register } from 'claude-code'
 
-import type { Info, Mood, Subagent, Task } from '../types'
-import { endsOnQuestion } from './domain/mascot'
+import type { Info, Mood, SessionWait, Subagent, Task } from '../types'
+import { boardSignature, loadBoard } from './data/board'
 import { quotaLabel, shortModel } from './domain/session-info'
+import { checkVerdict, promptSubmit, toolEnd, turnEnd } from './domain/session'
+import type { SessionState } from './domain/session'
 import { renderBand } from './ui/band'
+import { renderPane } from './ui/pane'
 
-// Same plugin/key refs as the ones ui/band.tsx reads: the engine wants each file to declare the atoms it updates.
+const PANE = 'taskflow'
+const PANE_TITLE = 'Taskflow'
+const WATCH_MS = 1000
+const DONE_RESET_MS = 4000
+
+// Same plugin/key refs as the ones ui/band.tsx and ui/pane.tsx read: the engine wants each file to declare the atoms it updates.
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
 const info = atom({ plugin: 'cria', key: 'info' } as const, null as Info | null)
@@ -14,8 +22,13 @@ const agents = atom({ plugin: 'cria', key: 'agents' } as const, [] as Subagent[]
 const tasks = atom({ plugin: 'cria', key: 'tasks' } as const, [] as Task[])
 const todo = atom({ plugin: 'cria', key: 'todo' } as const, null as string | null)
 const isHidden = atom({ plugin: 'cria', key: 'isHidden' } as const, false)
+const waiting = atom({ plugin: 'cria', key: 'waiting' } as const, {
+  dialog: false,
+  permission: false,
+  lastTurnAsked: false,
+} as SessionWait)
 
-async function refreshInfo($: Parameters<Hook<'session.measure'>>[0]) {
+async function refreshInfo($: EngineInterface) {
   const [model, cwd, usage] = await Promise.all([$.session.model(), $.session.cwd(), $.session.usage()])
   const git = await $.process.run(['git', '-C', cwd, 'rev-parse', '--abbrev-ref', 'HEAD']).catch(() => null)
   const branch = git && git.exitCode === 0 ? String(git.stdout).trim() : null
@@ -30,46 +43,107 @@ async function refreshInfo($: Parameters<Hook<'session.measure'>>[0]) {
   await update($, info, () => next)
 }
 
+async function applySession($: EngineInterface, reduce: (state: SessionState) => SessionState) {
+  const next = reduce({ mood: await read($, mood), waiting: await read($, waiting) })
+  await update($, mood, () => next.mood)
+  await update($, waiting, () => next.waiting)
+  return next
+}
+
+async function setWaiting($: EngineInterface, change: Partial<SessionWait>) {
+  await update($, waiting, wait => ({ ...wait, ...change }))
+}
+
+async function openPane($: EngineInterface, focus = false) {
+  await $.ui.open({ id: PANE, title: PANE_TITLE, columns: 60, ...(focus ? { focus: true as const } : {}) })
+}
+
 export const register: Register = on => {
+  // Bumped on every prompt and main turn end so a stale "done → idle" timer knows to skip.
+  let generation = 0
+  // Set once AskUserQuestion runs: mood stays 'asking' until the next prompt or main turn end.
+  let isAskHeld = false
+
   on('session.start', async ($, e, next) => {
     $.clock.every(100, () => void update($, step, s => s + 1))
-    $.command.register({ name: 'cria', description: 'Show or hide the floating mascot' })
+    await $.command.register({
+      name: 'cria',
+      description: 'Show or hide the mascot and Taskflow pane; `board` opens the pane',
+      argumentHint: '[board]',
+    })
     void refreshInfo($)
+    void loadBoard($)
+    if (!(await read($, isHidden))) void openPane($)
+
+    // Reload whenever a PROGRESS.md changes - mid-turn, from a subagent or from Obsidian - not only at turn end.
+    let lastSignature = ''
+    $.clock.every(WATCH_MS, async () => {
+      const signature = await boardSignature($)
+      if (signature === lastSignature) return
+      lastSignature = signature
+      await loadBoard($)
+    })
 
     return next(e)
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
-  on('command.run', { command: 'cria' }, async $ => {
+  on('command.run', { command: 'cria' }, async ($, e) => {
+    const arg = e.args.trim()
+    if (arg === 'board') {
+      await update($, isHidden, () => false)
+      await loadBoard($)
+      await openPane($, true)
+
+      return { text: 'Taskflow pane opened.' }
+    }
+    if (arg) return { text: `Unknown argument "${arg}". Use /cria or /cria board.` }
+
     const hidden = await update($, isHidden, h => !h)
+    if (hidden) await $.ui.close({ id: PANE })
+    else await openPane($)
 
     return { text: hidden ? 'Cria hidden' : 'Cria is back' }
-  })
-
-  // Bumped on every state change so a stale "done → idle" timer knows to skip.
-  let generation = 0
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('prompt.submit', async ($, e, next) => {
     generation += 1
-    await update($, mood, (): Mood => 'working')
+    isAskHeld = false
+    await applySession($, promptSubmit)
 
     return next(e)
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('tool.check', async ($, e, next) => {
     const verdict = await next(e)
-    if (verdict.decision === 'ask' && !e.agentId) await update($, mood, (): Mood => 'asking')
+    await applySession($, state => checkVerdict(state, { decision: verdict.decision, agentId: e.agentId }))
 
     return verdict
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
+  // The permission prompt is answered inside tool.call's next(e), so its end clears the flag.
   on('tool.call', async ($, e, next) => {
-    if (e.tool === 'AskUserQuestion') await update($, mood, (): Mood => 'asking')
     try {
       return await next(e)
     } finally {
-      await update($, mood, (): Mood => 'working')
+      if (!e.agentId) {
+        await applySession($, state => {
+          const ended = toolEnd(state)
+          return isAskHeld ? { ...ended, mood: 'asking' } : ended
+        })
+      }
     }
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
+
+  on('tool.call', { tool: 'AskUserQuestion' }, async ($, e, next) => {
+    isAskHeld = true
+    await setWaiting($, { dialog: true })
+    await update($, mood, (): Mood => 'asking')
+    try {
+      return await next(e)
+    } finally {
+      await setWaiting($, { dialog: false })
+    }
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('session.compact', async ($, e, next) => {
     await update($, mood, (): Mood => 'loading')
@@ -78,32 +152,33 @@ export const register: Register = on => {
     } finally {
       await update($, mood, (): Mood => 'idle')
     }
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('session.measure', async ($, e, next) => {
     void refreshInfo($)
 
     return next(e)
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('turn.complete', async ($, e, next) => {
+    void loadBoard($)
     const { agentId } = e
     if (agentId) await update($, agents, list => list.filter(agent => agent.agentId !== agentId))
     if (!agentId) {
       void refreshInfo($)
       generation += 1
+      isAskHeld = false
       const finished = generation
-      const nextMood: Mood = e.isAborted ? 'blocked' : endsOnQuestion(e.answer) ? 'asking' : 'done'
-      await update($, mood, () => nextMood)
-      if (nextMood === 'done') {
-        $.clock.after(4000, () => {
+      const ended = await applySession($, state => turnEnd(state, { isAborted: e.isAborted, answer: e.answer }))
+      if (ended.mood === 'done') {
+        $.clock.after(DONE_RESET_MS, () => {
           if (generation === finished) void update($, mood, (): Mood => 'idle')
         })
       }
     }
 
     return next(e)
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('agent.spawn', async ($, e, next) => {
     const started = await next(e)
@@ -114,14 +189,14 @@ export const register: Register = on => {
     }
 
     return started
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('tool.call', { tool: 'TodoWrite' }, async ($, e, next) => {
     const active = e.todos.find(item => item.status === 'in_progress')
     await update($, todo, () => active?.activeForm ?? null)
 
     return next(e)
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('tool.call', { tool: 'TaskCreate' }, async ($, e, next) => {
     const created = await next(e)
@@ -131,7 +206,7 @@ export const register: Register = on => {
     }
 
     return created
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('tool.call', { tool: 'TaskUpdate' }, async ($, e, next) => {
     const { taskId, status, activeForm, subject } = e
@@ -146,7 +221,8 @@ export const register: Register = on => {
     )
 
     return next(e)
-  })
+  }).catch(($, e, next) => (next.called ? undefined : next(e)))
 
   on('ui.render', { component: 'AbovePrompt' }, renderBand)
+  on('ui.render', { component: 'Pane', requestId: PANE }, renderPane)
 }
