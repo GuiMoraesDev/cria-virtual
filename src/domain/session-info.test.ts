@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { humanDuration, meterBar, meterColor, quotaIcon, quotaLabel, quotaReset, shortModel } from './session-info'
+import { humanDuration, meterBar, meterColor, modelTag, quotaIcon, quotaLabel, quotaReset, shortModel } from './session-info'
 
 test('shortModel drops the claude- prefix and date suffix and dots the version', () => {
   expect(shortModel('claude-opus-4-5-20251101')).toBe('opus-4.5')
@@ -98,4 +98,17 @@ test('quotaIcon shows how the session window feels as it fills', () => {
   expect(quotaIcon('five_hour', 50)).toBe('😰')
   expect(quotaIcon('five_hour', 79.9)).toBe('😰')
   expect(quotaIcon('five_hour', 80)).toBe('🥵')
+})
+
+test('modelTag joins the model and a named effort with a dot', () => {
+  expect(modelTag('opus-5.5', 'high')).toBe('opus-5.5 · high')
+})
+
+test('modelTag shows the model alone when there is no effort', () => {
+  expect(modelTag('opus-5.5', null)).toBe('opus-5.5')
+})
+
+test('modelTag shows a numeric effort in compact form', () => {
+  expect(modelTag('opus-5.5', 32_000)).toBe('opus-5.5 · 32K')
+  expect(modelTag('opus-5.5', 1_500_000)).toBe('opus-5.5 · 1.5M')
 })

@@ -5,6 +5,7 @@ import {
   humanDuration,
   meterBar,
   meterColor,
+  modelTag,
   quotaIcon,
   quotaReset,
 } from "../domain/session-info";
@@ -25,7 +26,7 @@ export function SessionInfo({
   return (
     <Box alignItems="flex-end" gap={2}>
       <Box flexDirection="column">
-        <Text color="#00B4D8">🧠 [{details.model}]</Text>
+        <Text color="#00B4D8">🧠 [{modelTag(details.model, details.effort)}]</Text>
         <Text dimColor>📁 {details.dir}</Text>
       </Box>
 
