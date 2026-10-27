@@ -23,7 +23,8 @@
       "**/*.test.ts",
       "**/*.test.tsx",
       "**/.claude-plugin/types/**",
-      "**/*-frames.ts"
+      "**/*-frames.ts",
+      "**/package-lock.json"
     ],
     "branchPrefix": "",
     "titlePrefix": "",
