@@ -4,7 +4,7 @@ import type { EngineInterface, Next, RenderInput } from 'claude-code'
 import type { Info, Mood, Subagent, Task } from '../../types'
 import { mascotFrame } from '../domain/mascot'
 import { humanDuration, meterColor } from '../domain/session-info'
-import { MascotSprite } from './components/atoms/MascotSprite'
+import { MascotSprite } from './MascotSprite'
 
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
