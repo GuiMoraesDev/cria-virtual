@@ -1,10 +1,12 @@
-import { atom, read, update } from 'claude-code'
+import { atom, update } from 'claude-code'
 import type { Hook, Register } from 'claude-code'
 
 import type { Info, Mood, Subagent, Task } from '../types'
-import { endsOnQuestion, mascotFrame } from './domain/mascot'
-import { MascotSprite } from './ui/components/atoms/MascotSprite'
+import { endsOnQuestion } from './domain/mascot'
+import { quotaLabel, shortModel } from './domain/session-info'
+import { renderBand } from './ui/band'
 
+// Same plugin/key refs as the ones ui/band.tsx reads: the engine wants each file to declare the atoms it updates.
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
 const info = atom({ plugin: 'cria', key: 'info' } as const, null as Info | null)
@@ -12,28 +14,6 @@ const agents = atom({ plugin: 'cria', key: 'agents' } as const, [] as Subagent[]
 const tasks = atom({ plugin: 'cria', key: 'tasks' } as const, [] as Task[])
 const todo = atom({ plugin: 'cria', key: 'todo' } as const, null as string | null)
 const isHidden = atom({ plugin: 'cria', key: 'isHidden' } as const, false)
-
-const QUOTA_LABELS: Record<string, string> = { five_hour: 'session', seven_day: 'weekly' }
-
-function shortModel(id: string): string {
-  const s = id.replace(/^claude-/, '').replace(/-\d{8}$/, '')
-  const m = s.match(/^([a-z]+)-(\d+)-(\d+)$/)
-
-  return m ? `${m[1]}-${m[2]}.${m[3]}` : s
-}
-
-function humanDuration(ms: number): string {
-  const s = Math.max(0, Math.floor(ms / 1000))
-  if (s < 60) return `${s}s`
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m`
-
-  return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
-}
-
-function meterColor(percent: number): string {
-  return percent >= 80 ? '#F36353' : percent >= 65 ? '#FF8700' : percent >= 50 ? '#FFBF36' : '#00BD74'
-}
 
 async function refreshInfo($: Parameters<Hook<'session.measure'>>[0]) {
   const [model, cwd, usage] = await Promise.all([$.session.model(), $.session.cwd(), $.session.usage()])
@@ -45,7 +25,7 @@ async function refreshInfo($: Parameters<Hook<'session.measure'>>[0]) {
     branch,
     contextPercent: usage.context.percent ?? null,
     startedAt: usage.startedAt,
-    quotas: usage.rateLimits.map(({ kind, percentUsed }) => ({ label: QUOTA_LABELS[kind] ?? kind, percent: percentUsed })),
+    quotas: usage.rateLimits.map(({ kind, percentUsed }) => ({ label: quotaLabel(kind), percent: percentUsed })),
   }
   await update($, info, () => next)
 }
@@ -168,60 +148,5 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (await read($, isHidden)) return next(e)
-
-    const ui = $.ui.resolve(e)
-    const { Box, Text } = ui
-    const cells = mascotFrame(await read($, mood), await read($, step))
-
-    const details = await read($, info)
-    const now = await $.clock.now()
-    const running = await read($, agents)
-    const current = (await read($, tasks)).find(task => task.status === 'in_progress')?.label ?? (await read($, todo))
-    const activity = [
-      running.length > 0 ? (
-        <Text key="agents">
-          <Text color="#C678DD">⚡{running.length > 1 ? running.length : ''}</Text>{' '}
-          {running.slice(0, 2).map(({ type, model }) => `${type}·${model}`).join(', ')}
-          {running.length > 2 && <Text dimColor> +{running.length - 2}</Text>}
-        </Text>
-      ) : null,
-      current ? <Text key="task" weight="bold">{current}</Text> : null,
-    ]
-    const rows = details
-      ? [
-          <Text key="model">
-            <Text color="#00B4D8">[{details.model}]</Text> <Text dimColor>📁 {details.dir}</Text>
-          </Text>,
-          details.branch ? <Text key="branch" color="#00BD74">🌿 {details.branch}</Text> : null,
-          <Text key="time">
-            <Text color="#00B4D8">⏱ {humanDuration(now - details.startedAt)}</Text>
-            {details.contextPercent !== null && (
-              <Text color={meterColor(details.contextPercent)}> 🧠 {Math.round(details.contextPercent)}%</Text>
-            )}
-          </Text>,
-          details.quotas.length > 0 ? (
-            <Text key="quota">
-              {details.quotas.map(({ label, percent }, index) => (
-                <Text key={label} color={meterColor(percent)}>
-                  {index > 0 ? ' · ' : ''}
-                  {label} {Math.round(percent)}%
-                </Text>
-              ))}
-            </Text>
-          ) : null,
-          ...activity,
-        ]
-      : activity
-
-    return (
-      <Box flexDirection="row" justifyContent="flex-end" alignItems="center">
-        <Box flexDirection="column" alignItems="flex-end" marginRight={1}>{rows}</Box>
-        <Box marginRight={1}>
-          <MascotSprite ui={ui} cells={cells} />
-        </Box>
-      </Box>
-    )
-  })
+  on('ui.render', { component: 'AbovePrompt' }, renderBand)
 }
