@@ -33,16 +33,28 @@ async function currentBranch($: EngineInterface, cwd: string) {
   return git && git.exitCode === 0 ? String(git.stdout).trim() : null
 }
 
+async function isDirty($: EngineInterface, cwd: string) {
+  const diff = await $.process.run(['git', '-C', cwd, 'diff', '--quiet', '--ignore-submodules', 'HEAD']).catch(() => null)
+  return diff !== null && diff.exitCode === 1
+}
+
 async function refreshInfo($: EngineInterface) {
   const [model, cwd, usage] = await Promise.all([$.session.model(), $.session.cwd(), $.session.usage()])
   const branch = await currentBranch($, cwd)
+  const dirty = branch ? await isDirty($, cwd) : false
   const next: Info = {
     model: shortModel(model),
     dir: cwd.split('/').pop() ?? cwd,
     branch,
+    dirty,
     contextPercent: usage.context.percent ?? null,
     startedAt: usage.startedAt,
-    quotas: usage.rateLimits.map(({ kind, percentUsed }) => ({ label: quotaLabel(kind), percent: percentUsed })),
+    quotas: usage.rateLimits.map(({ kind, percentUsed, resetsAt }) => ({
+      kind,
+      label: quotaLabel(kind),
+      percent: percentUsed,
+      resetsAt: resetsAt ? Date.parse(resetsAt) : null,
+    })),
   }
   await update($, info, () => next)
 }

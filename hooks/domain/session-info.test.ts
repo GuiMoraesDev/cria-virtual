@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { humanDuration, meterColor, quotaLabel, shortModel } from './session-info'
+import { humanDuration, meterBar, meterColor, quotaIcon, quotaLabel, quotaReset, shortModel } from './session-info'
 
 test('shortModel drops the claude- prefix and date suffix and dots the version', () => {
   expect(shortModel('claude-opus-4-5-20251101')).toBe('opus-4.5')
@@ -63,4 +63,31 @@ test('quotaLabel names the seven_day quota weekly', () => {
 
 test('quotaLabel passes unknown kinds through unchanged', () => {
   expect(quotaLabel('thirty_day')).toBe('thirty_day')
+})
+
+test('quotaIcon marks session and weekly, and falls back to a ticket', () => {
+  expect(quotaIcon('five_hour')).toBe('🔥')
+  expect(quotaIcon('seven_day')).toBe('📅')
+  expect(quotaIcon('spend_limit')).toBe('🎟')
+})
+
+test('quotaReset counts down the five_hour window', () => {
+  const now = Date.parse('2026-10-27T10:00:00Z')
+  expect(quotaReset('five_hour', now + 3 * 3_600_000 + 22 * 60_000, now)).toBe('3h22m')
+})
+
+test('quotaReset names the weekday and time for longer windows', () => {
+  const at = new Date(2026, 9, 27, 17, 59).getTime()
+  expect(quotaReset('seven_day', at, at - 86_400_000)).toBe('Tue 17:59')
+})
+
+test('quotaReset is empty once the window has passed or is unknown', () => {
+  expect(quotaReset('five_hour', 1_000, 2_000)).toBe('')
+  expect(quotaReset('five_hour', null, 2_000)).toBe('')
+})
+
+test('meterBar fills one segment per ten percent', () => {
+  expect(meterBar(0)).toBe('░░░░░░░░░░')
+  expect(meterBar(47)).toBe('████░░░░░░')
+  expect(meterBar(120)).toBe('██████████')
 })

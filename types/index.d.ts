@@ -2,9 +2,10 @@ export type Info = {
   model: string
   dir: string
   branch: string | null
+  dirty: boolean
   contextPercent: number | null
   startedAt: number
-  quotas: { label: string; percent: number }[]
+  quotas: { kind: string; label: string; percent: number; resetsAt: number | null }[]
 }
 
 export type Subagent = { agentId: string; type: string; model: string }
