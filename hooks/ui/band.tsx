@@ -1,7 +1,7 @@
 import { atom, read } from 'claude-code'
 import type { EngineInterface, Next, RenderInput } from 'claude-code'
 
-import type { Info, Mood, Subagent, Task } from '../../types'
+import type { Info, Mood } from '../../types'
 import { mascotFrame } from '../domain/mascot'
 import { MascotSprite } from './MascotSprite'
 import { SessionInfo } from './SessionInfo'
@@ -9,9 +9,6 @@ import { SessionInfo } from './SessionInfo'
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
 const info = atom({ plugin: 'cria', key: 'info' } as const, null as Info | null)
-const agents = atom({ plugin: 'cria', key: 'agents' } as const, [] as Subagent[])
-const tasks = atom({ plugin: 'cria', key: 'tasks' } as const, [] as Task[])
-const todo = atom({ plugin: 'cria', key: 'todo' } as const, null as string | null)
 const isHidden = atom({ plugin: 'cria', key: 'isHidden' } as const, false)
 
 export async function renderBand(
@@ -27,12 +24,10 @@ export async function renderBand(
 
   const details = await read($, info)
   const now = await $.clock.now()
-  const running = await read($, agents)
-  const current = (await read($, tasks)).find(task => task.status === 'in_progress')?.label ?? (await read($, todo))
 
   return (
     <Box flexDirection="row" justifyContent="flex-end" alignItems="center">
-      <SessionInfo ui={ui} details={details} now={now} running={running} current={current} />
+      <SessionInfo ui={ui} details={details} now={now} />
       <Box marginRight={1}>
         <MascotSprite ui={ui} cells={cells} />
       </Box>
