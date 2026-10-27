@@ -1,12 +1,15 @@
 import { atom, read, update } from 'claude-code'
 import type { Hook, Register } from 'claude-code'
 
-import type { Info, Mood } from '../types'
+import type { Info, Mood, Subagent, Task } from '../types'
 import { MASCOT_ANIMATIONS, type MascotKeyframe } from './frames'
 
 const mood = atom({ plugin: 'cria', key: 'mood' } as const, 'idle' as Mood)
 const step = atom({ plugin: 'cria', key: 'step' } as const, 0)
 const info = atom({ plugin: 'cria', key: 'info' } as const, null as Info | null)
+const agents = atom({ plugin: 'cria', key: 'agents' } as const, [] as Subagent[])
+const tasks = atom({ plugin: 'cria', key: 'tasks' } as const, [] as Task[])
+const todo = atom({ plugin: 'cria', key: 'todo' } as const, null as string | null)
 const isHidden = atom({ plugin: 'cria', key: 'isHidden' } as const, false)
 
 const PALETTE: Record<string, string> = {
@@ -123,7 +126,9 @@ export const register: Register = on => {
   })
 
   on('turn.complete', async ($, e, next) => {
-    if (!e.agentId) {
+    const { agentId } = e
+    if (agentId) await update($, agents, list => list.filter(agent => agent.agentId !== agentId))
+    if (!agentId) {
       void refreshInfo($)
       generation += 1
       const finished = generation
@@ -135,6 +140,49 @@ export const register: Register = on => {
         })
       }
     }
+
+    return next(e)
+  })
+
+  on('agent.spawn', async ($, e, next) => {
+    const started = await next(e)
+    const { agentId } = started
+    if (agentId) {
+      const agent: Subagent = { agentId, type: e.subagentType || 'agent', model: shortModel(started.model) }
+      await update($, agents, list => [agent, ...list])
+    }
+
+    return started
+  })
+
+  on('tool.call', { tool: 'TodoWrite' }, async ($, e, next) => {
+    const active = e.todos.find(item => item.status === 'in_progress')
+    await update($, todo, () => active?.activeForm ?? null)
+
+    return next(e)
+  })
+
+  on('tool.call', { tool: 'TaskCreate' }, async ($, e, next) => {
+    const created = await next(e)
+    if ('result' in created && created.result && !created.isError) {
+      const task: Task = { id: created.result.task.id, label: e.activeForm ?? e.subject, status: 'pending' }
+      await update($, tasks, list => [...list, task])
+    }
+
+    return created
+  })
+
+  on('tool.call', { tool: 'TaskUpdate' }, async ($, e, next) => {
+    const { taskId, status, activeForm, subject } = e
+    await update($, tasks, list =>
+      status === 'deleted'
+        ? list.filter(task => task.id !== taskId)
+        : list.map(task =>
+            task.id === taskId
+              ? { ...task, label: activeForm ?? subject ?? task.label, status: status ?? task.status }
+              : task,
+          ),
+    )
 
     return next(e)
   })
@@ -164,6 +212,18 @@ export const register: Register = on => {
 
     const details = await read($, info)
     const now = await $.clock.now()
+    const running = await read($, agents)
+    const current = (await read($, tasks)).find(task => task.status === 'in_progress')?.label ?? (await read($, todo))
+    const activity = [
+      running.length > 0 ? (
+        <Text key="agents">
+          <Text color="#C678DD">⚡{running.length > 1 ? running.length : ''}</Text>{' '}
+          {running.slice(0, 2).map(({ type, model }) => `${type}·${model}`).join(', ')}
+          {running.length > 2 && <Text dimColor> +{running.length - 2}</Text>}
+        </Text>
+      ) : null,
+      current ? <Text key="task" weight="bold">{current}</Text> : null,
+    ]
     const rows = details
       ? [
           <Text key="model">
@@ -186,8 +246,9 @@ export const register: Register = on => {
               ))}
             </Text>
           ) : null,
+          ...activity,
         ]
-      : []
+      : activity
 
     return (
       <Box flexDirection="row" justifyContent="flex-end" alignItems="center">
