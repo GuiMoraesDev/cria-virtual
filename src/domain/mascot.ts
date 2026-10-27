@@ -1,6 +1,6 @@
 import { MASCOT_ANIMATIONS, type MascotKeyframe } from './mascot-frames'
 
-export type MascotMood = 'idle' | 'working' | 'blocked' | 'asking' | 'done' | 'loading'
+type MascotMood = 'idle' | 'working' | 'blocked' | 'asking' | 'done' | 'loading'
 
 const PALETTE: Record<string, string> = {
   A: '#00B4D8',
