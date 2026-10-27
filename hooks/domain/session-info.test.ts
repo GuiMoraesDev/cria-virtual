@@ -65,10 +65,10 @@ test('quotaLabel passes unknown kinds through unchanged', () => {
   expect(quotaLabel('thirty_day')).toBe('thirty_day')
 })
 
-test('quotaIcon marks session and weekly, and falls back to a ticket', () => {
-  expect(quotaIcon('five_hour')).toBe('🔥')
-  expect(quotaIcon('seven_day')).toBe('📅')
-  expect(quotaIcon('spend_limit')).toBe('🎟')
+test('quotaIcon marks a calm session and weekly, and falls back to a ticket', () => {
+  expect(quotaIcon('five_hour', 0)).toBe('😌')
+  expect(quotaIcon('seven_day', 0)).toBe('📅')
+  expect(quotaIcon('spend_limit', 0)).toBe('🎟')
 })
 
 test('quotaReset counts down the five_hour window', () => {
@@ -90,4 +90,12 @@ test('meterBar fills one segment per ten percent', () => {
   expect(meterBar(0)).toBe('░░░░░░░░░░')
   expect(meterBar(47)).toBe('████░░░░░░')
   expect(meterBar(120)).toBe('██████████')
+})
+
+test('quotaIcon shows how the session window feels as it fills', () => {
+  expect(quotaIcon('five_hour', 0)).toBe('😌')
+  expect(quotaIcon('five_hour', 49.9)).toBe('😌')
+  expect(quotaIcon('five_hour', 50)).toBe('😰')
+  expect(quotaIcon('five_hour', 79.9)).toBe('😰')
+  expect(quotaIcon('five_hour', 80)).toBe('🥵')
 })

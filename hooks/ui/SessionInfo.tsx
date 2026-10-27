@@ -89,7 +89,7 @@ export function SessionInfo({
             return (
               <Text key={kind}>
                 <Text color={meterColor(percent)}>
-                  {quotaIcon(kind)} {label} {Math.round(percent)}%
+                  {quotaIcon(kind, percent)} {label} {Math.round(percent)}%
                 </Text>
                 {reset && <Text dimColor> ⏳ {reset}</Text>}
               </Text>

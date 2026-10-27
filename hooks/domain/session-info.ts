@@ -34,11 +34,14 @@ export function meterColor(percent: number): string {
 }
 
 const QUOTA_ICONS: Record<string, string> = {
-  five_hour: "🔥",
   seven_day: "📅",
 };
 
-export function quotaIcon(kind: string): string {
+// The session window is the one that bites, so its icon tracks how full it is.
+export function quotaIcon(kind: string, percent: number): string {
+  if (kind === "five_hour") {
+    return percent >= 80 ? "🥵" : percent >= 50 ? "😰" : "😌";
+  }
   return QUOTA_ICONS[kind] ?? "🎟";
 }
 
