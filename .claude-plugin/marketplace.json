@@ -1,0 +1,13 @@
+{
+  "name": "cria-virtual",
+  "owner": {
+    "name": "Guilherme Moraes"
+  },
+  "plugins": [
+    {
+      "name": "cria",
+      "source": "./",
+      "description": "Floating pixel mascot band that reacts to what Claude is doing and shows session info"
+    }
+  ]
+}
