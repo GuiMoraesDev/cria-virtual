@@ -2,7 +2,7 @@
   "name": "cria-virtual",
   "private": true,
   "scripts": {
-    "check-types": "tsc -p cria"
+    "check-types": "tsc -p ."
   },
   "devDependencies": {
     "typescript": "5.6.3"

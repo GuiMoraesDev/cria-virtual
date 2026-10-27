@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Claude Code mod built around the Cria pixel mascot: `cria/` is the one mod, with the floating mascot band (session info) and the Taskflow pane (plans, tasks, PRs).
+Claude Code mod built around the Cria pixel mascot: this repository is the one mod, with the floating mascot band (session info) and the Taskflow pane (plans, tasks, PRs).
 
 ## Workflow
 
@@ -35,8 +35,8 @@ The tier binds the subagent that makes the change, and the mapping lives in
 `.claude/workflow.json`. A task applied on the wrong model is a deviation for the
 session log even when the diff is fine.
 
-Gates before every commit: `claude-personal plugin validate cria`,
-`npm run check-types`, `claude-personal plugin test cria`. There is no
+Gates before every commit: `claude-personal plugin validate .`,
+`npm run check-types`, `claude-personal plugin test .`. There is no
 pre-commit hook, so running them is on you.
 
 Commit messages and pull requests carry no AI signature - no `Co-Authored-By`
@@ -64,9 +64,9 @@ while ⚠️ critical leads with what the wrong answer costs.
 ## Commands
 
 ```bash
-claude-personal plugin validate cria   # manifest + hooks module checks
+claude-personal plugin validate .      # manifest + hooks module checks
 npm run check-types                    # type-check (needs the engine-laid .claude-plugin/types)
-claude-personal plugin test cria       # *.test.ts(x) under the mod
+claude-personal plugin test .          # *.test.ts(x) under the mod
 ```
 
 ## Which doc owns what
