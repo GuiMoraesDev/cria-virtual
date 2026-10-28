@@ -57,7 +57,7 @@ export function SessionInfo({
             ) : null}
           </Box>
         ) : null}
-        <Text color="#00B4D8">⏱ {humanDuration(now - details.startedAt)}</Text>
+        <Text color="#00B4D8" wrap="truncate-end">⏱ {humanDuration(now - details.startedAt)}</Text>
       </Box>
 
       {details.contextPercent !== null && (
@@ -82,7 +82,7 @@ export function SessionInfo({
           const reset = quotaReset(kind, resetsAt, now);
 
           return (
-            <Text key={kind}>
+            <Text key={kind} wrap="truncate-end">
               <Text color={meterColor(percent)}>
                 {quotaIcon(kind, percent)} {label} {Math.round(percent)}%
               </Text>

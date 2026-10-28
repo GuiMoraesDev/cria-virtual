@@ -32,8 +32,8 @@ export async function renderBand(
   const stage = bandLayout(e.props.bodyColumns, details);
   const mascot = (
     <Box
-      marginRight={1}
-      alignSelf={stage === "mascot-above" ? "flex-end" : undefined}
+      marginRight={stage === "mascot-above" ? 0 : 1}
+      alignSelf={stage === "mascot-above" ? "center" : undefined}
     >
       <MascotSprite ui={ui} cells={cells} />
     </Box>

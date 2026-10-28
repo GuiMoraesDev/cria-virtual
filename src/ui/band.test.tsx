@@ -147,7 +147,7 @@ function pathHolding(node: Drawn, patterns: RegExp[]): Drawn[] {
 }
 
 // Full usage: widest group is the 18-cell branch group, so info-column fits at 18 + 13 = 31.
-test('AC-5: below the info-column fit the mascot sits on its own row above the info, aligned right', async ($, on) => {
+test('AC-5: below the info-column fit the mascot sits on its own row above the info, centered', async ($, on) => {
   const { clock } = world(on, FULL_USAGE)
   await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
   await clock.settle()
@@ -163,7 +163,7 @@ test('AC-5: below the info-column fit the mascot sits on its own row above the i
   expect(mascotAt).toBeGreaterThanOrEqual(0)
   expect(mascotAt).toBeLessThan(infoAt)
 
-  const aligned = pathHolding(tree, [MASCOT]).some(box => (box.props as { alignSelf?: string } | undefined)?.alignSelf === 'flex-end')
+  const aligned = pathHolding(tree, [MASCOT]).some(box => (box.props as { alignSelf?: string } | undefined)?.alignSelf === 'center')
   expect(aligned).toBe(true)
 
   await ui.unmount()
@@ -241,5 +241,34 @@ test('AC-7: the dirty * is its own Text node outside the truncated branch Text',
   expect(star).toHaveLength(1)
   expect(textOf(innermostText(tree, /🌿/))).not.toContain('*')
 
+  await ui.unmount()
+})
+
+// Every Text whose subtree shows the pattern, outermost first.
+function textsHolding(node: Drawn, pattern: RegExp): Drawn[] {
+  if (!pattern.test(textOf(node))) return []
+  const below = (node.children ?? []).filter(isNode).flatMap(child => textsHolding(child, pattern))
+  return [...(node.type === 'Text' ? [node] : []), ...below]
+}
+
+test('a quota line truncates instead of wrapping its timer onto a new line', async ($, on) => {
+  const { clock } = world(on, FULL_USAGE)
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  await clock.settle()
+
+  const ui = await mountBand($, 30, 30)
+  const line = textsHolding((await ui.drawn()) as Drawn, /30%/)[0]
+  expect((line?.props as { wrap?: string } | undefined)?.wrap).toBe('truncate-end')
+  await ui.unmount()
+})
+
+test('the session timer truncates instead of wrapping onto a new line', async ($, on) => {
+  const { clock } = world(on, FULL_USAGE)
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  await clock.settle()
+
+  const ui = await mountBand($, 30, 30)
+  const timer = textsHolding((await ui.drawn()) as Drawn, /⏱/).at(-1)
+  expect((timer?.props as { wrap?: string } | undefined)?.wrap).toBe('truncate-end')
   await ui.unmount()
 })
