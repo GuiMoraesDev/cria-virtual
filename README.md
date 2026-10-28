@@ -67,6 +67,41 @@ Add the marketplace and install the plugin from inside Claude Code:
 | --- | --- |
 | `/cria` | Hides the band ("Cria hidden") or shows it again ("Cria is back") |
 
+## What it runs and hooks 🔍
+
+### Programs it runs
+
+Only `git`, read-only, in the session's working directory. It runs when the session starts, on `session.measure`, and after each main turn. If the first command finds no branch, the second is skipped.
+
+| Command | Why |
+| --- | --- |
+| `git -C <cwd> rev-parse --abbrev-ref HEAD` | Reads the branch name shown in the band |
+| `git -C <cwd> diff --quiet --ignore-submodules HEAD` | Checks whether the tree has changes, shown as `*` |
+
+No other program is run.
+
+### Data it reads, and where it goes
+
+The session's model, effort, working directory, usage (context %, rate limits, start time) and the last turn's answer text, which is only checked for a trailing `?`. All of it stays in the band. The mod makes no network calls and sends nothing off the machine.
+
+### Hooks
+
+| Hook | What it does |
+| --- | --- |
+| `session.start` | Starts the mascot animation, registers `/cria`, loads the session info |
+| `command.run` (`/cria`) | Toggles the band; no other command is touched |
+| `session.compact` | Shows the `loading` mood while compacting, then `idle` |
+| `session.measure` | Refreshes the session info |
+| `prompt.submit` | Sets the `working` mood |
+| `classic.Notification` | Observes a main-session `permission_prompt` to show the `asking` mood; it makes no permission decision |
+| `tool.call` | Sets the mood around a tool run and passes the call on unchanged |
+| `tool.call` (`AskUserQuestion`) | Holds the `asking` mood while the question is open and passes the call on unchanged |
+| `turn.step` | Reads the effort for the band and passes the step on |
+| `turn.complete` | Sets `done`, `asking` or `blocked`, and refreshes the session info |
+| `ui.render` (`AbovePrompt`) | Draws the band |
+
+The mod never approves, denies or changes a tool call, a permission or a setting. Apart from answering `/cria`, it passes every event on unchanged.
+
 ## Project Maintenance 👨‍🔧
 
 - `.claude-plugin/` holds the manifest and the marketplace entry, `src/` holds `hooks.json` and `register.tsx` plus the `domain/` logic and the `ui/` components, and `types/` holds the engine types.
