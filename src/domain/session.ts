@@ -14,11 +14,11 @@ export function turnEnd(
   }
 }
 
-export function checkVerdict(
+export function permissionPrompt(
   state: SessionState,
-  { decision, agentId }: { decision: string; agentId?: string },
+  { notificationType, agentId }: { notificationType: string; agentId?: string },
 ): SessionState {
-  if (decision !== 'ask' || agentId) return state
+  if (notificationType !== 'permission_prompt' || agentId) return state
   return { mood: 'asking', waiting: { ...state.waiting, permission: true } }
 }
 
