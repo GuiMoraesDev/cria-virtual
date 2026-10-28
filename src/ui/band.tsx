@@ -2,6 +2,7 @@ import { atom, read } from "claude-code";
 import type { EngineInterface, Next, RenderInput } from "claude-code";
 
 import type { Info, Mood } from "../../types";
+import { bandLayout } from "../domain/band-layout";
 import { mascotFrame } from "../domain/mascot";
 import { MascotSprite } from "./MascotSprite";
 import { SessionInfo } from "./SessionInfo";
@@ -38,7 +39,12 @@ export async function renderBand(
         justifyContent="space-between"
         alignItems="center"
       >
-        <SessionInfo ui={ui} details={details} now={now} />
+        <SessionInfo
+          ui={ui}
+          details={details}
+          now={now}
+          stage={bandLayout(e.props.bodyColumns, details)}
+        />
         <Box marginRight={1}>
           <MascotSprite ui={ui} cells={cells} />
         </Box>
