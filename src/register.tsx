@@ -99,7 +99,7 @@ export const register: Register = on => {
     const arg = e.args.trim()
     if (arg) return { text: `Unknown argument "${arg}". Use /cria.` }
 
-    const hidden = await update($, isHidden, h => !h)
+    const hidden = await update($, isHidden, current => !current)
 
     return { text: hidden ? 'Cria hidden' : 'Cria is back' }
   }).catch(passThrough)

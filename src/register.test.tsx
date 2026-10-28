@@ -71,3 +71,12 @@ test('refreshInfo keeps the recorded effort and turn.step passes its input on un
 
   expect(written.steps[0]).toEqual(MAIN_STEP)
 })
+
+test('/cria hides the band, then brings it back', async ($, on) => {
+  world(on)
+  const hidden = await $.command.run({ command: 'cria', args: '' })
+  expect(hidden.text).toBe('Cria hidden')
+
+  const back = await $.command.run({ command: 'cria', args: '' })
+  expect(back.text).toBe('Cria is back')
+})
