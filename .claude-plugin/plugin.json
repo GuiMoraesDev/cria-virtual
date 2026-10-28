@@ -1,1 +1,10 @@
-{ "name": "cria", "version": "0.1.13", "description": "Floating pixel mascot band that reacts to what Claude is doing and shows session info", "types": "./types/index.d.ts", "hooks": "./src/hooks.json" }
+{
+  "name": "cria",
+  "displayName": "Cria",
+  "version": "0.1.13",
+  "description": "Floating pixel mascot band that reacts to what Claude is doing and shows session info",
+  "author": {
+    "name": "Guilherme Moraes"
+  },
+  "hooks": "./src/hooks.json"
+}
