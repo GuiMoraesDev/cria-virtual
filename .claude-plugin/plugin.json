@@ -6,5 +6,6 @@
   "author": {
     "name": "Guilherme Moraes"
   },
+  "icon": "./.claude-plugin/icon.png",
   "hooks": "./src/hooks.json"
 }
