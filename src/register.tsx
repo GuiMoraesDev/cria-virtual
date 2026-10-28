@@ -3,7 +3,7 @@ import type { Caught, EngineInterface, Register } from 'claude-code'
 
 import type { Info, Mood, SessionWait } from '../types'
 import { quotaLabel, shortModel } from './domain/session-info'
-import { checkVerdict, promptSubmit, toolEnd, turnEnd } from './domain/session'
+import { permissionPrompt, promptSubmit, toolEnd, turnEnd } from './domain/session'
 import type { SessionState } from './domain/session'
 import { renderBand } from './ui/band'
 
@@ -99,7 +99,7 @@ export const register: Register = on => {
     const arg = e.args.trim()
     if (arg) return { text: `Unknown argument "${arg}". Use /cria.` }
 
-    const hidden = await update($, isHidden, h => !h)
+    const hidden = await update($, isHidden, current => !current)
 
     return { text: hidden ? 'Cria hidden' : 'Cria is back' }
   }).catch(passThrough)
@@ -128,11 +128,13 @@ export const register: Register = on => {
     return next(e)
   }).catch(passThrough)
 
-  on('tool.check', async ($, e, next) => {
-    const verdict = await next(e)
-    await applySession($, state => checkVerdict(state, { decision: verdict.decision, agentId: e.agentId }))
+  on('classic.Notification', async ($, e, next) => {
+    const signal = { notificationType: e.notification_type, agentId: e.agent_id }
+    if (signal.notificationType === 'permission_prompt' && !signal.agentId) {
+      await applySession($, state => permissionPrompt(state, signal))
+    }
 
-    return verdict
+    return next(e)
   }).catch(passThrough)
 
   // The permission prompt is answered inside tool.call's next(e), so its end clears the flag.
