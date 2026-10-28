@@ -31,7 +31,7 @@ export async function renderBand(
   return (
     <Box flexDirection="column">
       <Text color="#f2f2f2" dimColor>
-        {"─".repeat((e.viewport?.columns ?? 80) - 6)}
+        {"─".repeat(Math.max(0, e.props.bodyColumns - 1))}
       </Text>
       <Box
         flexDirection="row"

@@ -1,7 +1,7 @@
 {
   "name": "cria",
   "displayName": "Cria",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Floating pixel mascot band that reacts to what Claude is doing and shows session info",
   "author": {
     "name": "Guilherme Moraes"
