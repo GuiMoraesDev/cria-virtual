@@ -6,13 +6,17 @@ import type { On, RenderElement, RenderPropsOf } from 'claude-code'
 function world(
   on: On,
   usage: { percent?: number; rateLimits: { kind: string; percentUsed: number; resetsAt: string | null }[] } = { rateLimits: [] },
+  git: { cwd: string; run: (command: unknown) => { exitCode: number; stdout: string } } = {
+    cwd: '/work/cria-virtual',
+    run: () => ({ exitCode: 128, stdout: '' }),
+  },
 ) {
   const clock = mock.clock(on)
   on('session.model', async () => ({ value: 'claude-opus-5-5' }))
-  on('session.cwd', async () => ({ value: '/work/cria-virtual' }))
+  on('session.cwd', async () => ({ value: git.cwd }))
   on('session.usage', async () => ({ value: { startedAt: 0, context: { window: 200_000, percent: usage.percent }, rateLimits: usage.rateLimits } }))
-  on('process.run', async () => ({
-    value: { exitCode: 128, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
+  on('process.run', async (_$, e) => ({
+    value: { ...git.run(e), stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
   }))
   on('turn.complete', async ($, e) => ({ text: e.answer }))
   on('session.measure', async ($, e) => ({ changed: e.changed }))
@@ -183,4 +187,59 @@ test('AC-6: the mascot is 4 rows by 12 cells that never shrink at 13 columns, an
   expect(await narrow.find({ text: MASCOT })).toBeUndefined()
   expect(pathHolding((await narrow.drawn()) as Drawn, [MASCOT])).toHaveLength(0)
   await narrow.unmount()
+})
+
+// A session in git on a long branch with uncommitted changes: process.run answers the two
+// git calls register.tsx makes (rev-parse for the branch, diff --quiet for the dirty state).
+const LONG_DIR = '/work/' + 'd'.repeat(34)
+const LONG_BRANCH = 'feat/' + 'b'.repeat(35)
+
+function worldInDirtyBranch(on: On) {
+  return world(on, FULL_USAGE, {
+    cwd: LONG_DIR,
+    run: command => {
+      const isDiff = JSON.stringify(command).includes('"diff"')
+      return { exitCode: isDiff ? 1 : 0, stdout: isDiff ? '' : LONG_BRANCH + '\n' }
+    },
+  }).clock
+}
+
+type TextNode = Drawn & { props?: { wrap?: string } }
+
+function textsMatching(node: Drawn, pattern: RegExp): TextNode[] {
+  const own = node.type === 'Text' && pattern.test(textOf(node)) ? [node] : []
+  return [...own, ...(node.children ?? []).filter(isNode).flatMap(child => textsMatching(child, pattern))]
+}
+
+// The innermost Text that carries the pattern: the node a wrap prop would sit on.
+const innermostText = (tree: RenderElement, pattern: RegExp) => textsMatching(tree as Drawn, pattern).at(-1)
+
+test('AC-7: the dir truncates keeping its end and the branch truncates with an ellipsis', async ($, on) => {
+  const clock = worldInDirtyBranch(on)
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  await clock.settle()
+
+  const ui = await mountBand($, 30, 30)
+  const tree = await ui.drawn()
+
+  expect(innermostText(tree, /📁/)?.props?.wrap).toBe('truncate-start')
+  expect(innermostText(tree, /🌿/)?.props?.wrap).toBe('truncate-end')
+
+  await ui.unmount()
+})
+
+test('AC-7: the dirty * is its own Text node outside the truncated branch Text', async ($, on) => {
+  const clock = worldInDirtyBranch(on)
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  await clock.settle()
+
+  const ui = await mountBand($, 30, 30)
+  const tree = await ui.drawn()
+
+  expect(innermostText(tree, /🌿/)).toBeDefined()
+  const star = textsMatching(tree as Drawn, /^\*$/)
+  expect(star).toHaveLength(1)
+  expect(textOf(innermostText(tree, /🌿/))).not.toContain('*')
+
+  await ui.unmount()
 })

@@ -31,7 +31,9 @@ export function SessionInfo({
       <Text color="#00B4D8">
         🧠 [{modelTag(details.model, details.effort)}]
       </Text>
-      <Text dimColor>📁 {details.dir}</Text>
+      <Text dimColor wrap="truncate-start">
+        📁 {details.dir}
+      </Text>
     </Box>
   );
 
@@ -44,10 +46,16 @@ export function SessionInfo({
     >
       <Box alignItems="flex-end" gap={2}>
         {details.branch ? (
-          <Text key="branch" color="#00BD74">
-            🌿 {details.branch}
-            {details.dirty ? "*" : ""}
-          </Text>
+          <Box key="branch">
+            <Text color="#00BD74" wrap="truncate-end">
+              🌿 {details.branch}
+            </Text>
+            {details.dirty ? (
+              <Box flexShrink={0}>
+                <Text color="#00BD74">*</Text>
+              </Box>
+            ) : null}
+          </Box>
         ) : null}
         <Text color="#00B4D8">⏱ {humanDuration(now - details.startedAt)}</Text>
       </Box>
