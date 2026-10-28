@@ -2,6 +2,7 @@ import { atom, read } from "claude-code";
 import type { EngineInterface, Next, RenderInput } from "claude-code";
 
 import type { Info, Mood } from "../../types";
+import { bandLayout } from "../domain/band-layout";
 import { mascotFrame } from "../domain/mascot";
 import { MascotSprite } from "./MascotSprite";
 import { SessionInfo } from "./SessionInfo";
@@ -28,20 +29,29 @@ export async function renderBand(
   const details = await read($, info);
   const now = await $.clock.now();
 
+  const stage = bandLayout(e.props.bodyColumns, details);
+  const mascot = (
+    <Box
+      marginRight={stage === "mascot-above" ? 0 : 1}
+      alignSelf={stage === "mascot-above" ? "center" : undefined}
+    >
+      <MascotSprite ui={ui} cells={cells} />
+    </Box>
+  );
+
   return (
     <Box flexDirection="column">
       <Text color="#f2f2f2" dimColor>
-        {"─".repeat((e.viewport?.columns ?? 80) - 6)}
+        {"─".repeat(Math.max(0, e.props.bodyColumns - 1))}
       </Text>
       <Box
-        flexDirection="row"
+        flexDirection={stage === "mascot-above" ? "column" : "row"}
         justifyContent="space-between"
         alignItems="center"
       >
-        <SessionInfo ui={ui} details={details} now={now} />
-        <Box marginRight={1}>
-          <MascotSprite ui={ui} cells={cells} />
-        </Box>
+        {stage === "mascot-above" && mascot}
+        <SessionInfo ui={ui} details={details} now={now} stage={stage} />
+        {stage !== "mascot-above" && stage !== "no-mascot" && mascot}
       </Box>
     </Box>
   );
