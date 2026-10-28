@@ -6,7 +6,7 @@ type MascotSpriteProps = { ui: ElementTable; cells: MascotCell[][] }
 
 export function MascotSprite({ ui: { Box, Text }, cells }: MascotSpriteProps) {
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexShrink={0}>
       {cells.map((row, index) => (
         <Text key={`mascot-${index}`}>
           {row.map(({ top, bottom }, column) =>

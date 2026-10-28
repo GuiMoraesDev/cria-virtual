@@ -85,7 +85,11 @@ export function SessionInfo({
       </Box>
     ) : null;
 
-  if (stage === "info-column") {
+  if (
+    stage === "info-column" ||
+    stage === "mascot-above" ||
+    stage === "no-mascot"
+  ) {
     return (
       <Box flexDirection="column">
         {model}

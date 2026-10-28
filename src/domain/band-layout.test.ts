@@ -11,6 +11,8 @@ import { bandLayout } from './band-layout'
 //   mascot         12 + 1 margin = 13
 //   row            20 + 2 + 19 + 2 + 15 + 13 = 71
 //   quotas-below   (20 + 2 + 19) + 13 = 54
+//   info-column    widest group (20) + 13 = 33
+//   no-mascot      below 13 columns, whatever the info
 const info: Info = {
   model: 'opus-5.5',
   effort: 'high',
@@ -27,6 +29,8 @@ const info: Info = {
 
 const ROW_FIT = 71
 const QUOTAS_BELOW_FIT = 54
+const INFO_COLUMN_FIT = 33
+const MASCOT_FIT = 13
 
 // A 31-cell branch widens the branch group by 27 cells: row 98, quotas-below 81.
 const longer: Info = { ...info, branch: 'feat/very-long-branch-name-here' }
@@ -42,7 +46,7 @@ test('AC-3: bandLayout is one row at the measured fit width and folds the quotas
 test('AC-4: bandLayout folds the branch group under model/dir one below the quotas-below fit', () => {
   expect(bandLayout(QUOTAS_BELOW_FIT, info)).toBe('quotas-below')
   expect(bandLayout(QUOTAS_BELOW_FIT - 1, info)).toBe('info-column')
-  expect(bandLayout(20, info)).toBe('info-column')
+  expect(bandLayout(INFO_COLUMN_FIT, info)).toBe('info-column')
 })
 
 test('AC-3, AC-4: a longer branch folds at a wider column', () => {
@@ -53,4 +57,11 @@ test('AC-3, AC-4: a longer branch folds at a wider column', () => {
   expect(bandLayout(LONGER_ROW_FIT - 1, longer)).toBe('quotas-below')
   expect(bandLayout(LONGER_QUOTAS_BELOW_FIT, longer)).toBe('quotas-below')
   expect(bandLayout(LONGER_QUOTAS_BELOW_FIT - 1, longer)).toBe('info-column')
+})
+
+test('AC-5, AC-6: bandLayout puts the mascot above one below the info-column fit and drops it below 13 columns', () => {
+  expect(bandLayout(INFO_COLUMN_FIT - 1, info)).toBe('mascot-above')
+  expect(bandLayout(MASCOT_FIT, info)).toBe('mascot-above')
+  expect(bandLayout(MASCOT_FIT - 1, info)).toBe('no-mascot')
+  expect(bandLayout(0, info)).toBe('no-mascot')
 })

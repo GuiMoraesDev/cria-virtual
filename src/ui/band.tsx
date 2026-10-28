@@ -29,25 +29,29 @@ export async function renderBand(
   const details = await read($, info);
   const now = await $.clock.now();
 
+  const stage = bandLayout(e.props.bodyColumns, details);
+  const mascot = (
+    <Box
+      marginRight={1}
+      alignSelf={stage === "mascot-above" ? "flex-end" : undefined}
+    >
+      <MascotSprite ui={ui} cells={cells} />
+    </Box>
+  );
+
   return (
     <Box flexDirection="column">
       <Text color="#f2f2f2" dimColor>
         {"─".repeat(Math.max(0, e.props.bodyColumns - 1))}
       </Text>
       <Box
-        flexDirection="row"
+        flexDirection={stage === "mascot-above" ? "column" : "row"}
         justifyContent="space-between"
         alignItems="center"
       >
-        <SessionInfo
-          ui={ui}
-          details={details}
-          now={now}
-          stage={bandLayout(e.props.bodyColumns, details)}
-        />
-        <Box marginRight={1}>
-          <MascotSprite ui={ui} cells={cells} />
-        </Box>
+        {stage === "mascot-above" && mascot}
+        <SessionInfo ui={ui} details={details} now={now} stage={stage} />
+        {stage !== "mascot-above" && stage !== "no-mascot" && mascot}
       </Box>
     </Box>
   );

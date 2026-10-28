@@ -134,3 +134,53 @@ test('AC-3, AC-4: the groups sit in a row, then the quotas drop below, then the 
   expect(directionHolding(column, MODEL, MASCOT)).toBe('row')
   await fold.unmount()
 })
+
+// The Boxes from the root down to the lowest one whose subtree shows every pattern.
+function pathHolding(node: Drawn, patterns: RegExp[]): Drawn[] {
+  if (!patterns.every(pattern => pattern.test(textOf(node)))) return []
+  const deeper = (node.children ?? []).filter(isNode).map(child => pathHolding(child, patterns)).find(path => path.length > 0)
+  return [...(node.type === 'Box' ? [node] : []), ...(deeper ?? [])]
+}
+
+// Full usage: widest group is the 18-cell branch group, so info-column fits at 18 + 13 = 31.
+test('AC-5: below the info-column fit the mascot sits on its own row above the info, aligned right', async ($, on) => {
+  const { clock } = world(on, FULL_USAGE)
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  await clock.settle()
+
+  const ui = await mountBand($, 30, 30)
+  const tree = (await ui.drawn()) as Drawn
+
+  const holder = pathHolding(tree, [MODEL, MASCOT]).at(-1)
+  expect(holder?.props?.flexDirection).toBe('column')
+  const children = (holder?.children ?? []).filter(isNode)
+  const mascotAt = children.findIndex(child => MASCOT.test(textOf(child)))
+  const infoAt = children.findIndex(child => MODEL.test(textOf(child)))
+  expect(mascotAt).toBeGreaterThanOrEqual(0)
+  expect(mascotAt).toBeLessThan(infoAt)
+
+  const aligned = pathHolding(tree, [MASCOT]).some(box => (box.props as { alignSelf?: string } | undefined)?.alignSelf === 'flex-end')
+  expect(aligned).toBe(true)
+
+  await ui.unmount()
+})
+
+test('AC-6: the mascot is 4 rows by 12 cells that never shrink at 13 columns, and is not drawn at 12', async ($, on) => {
+  const { clock } = world(on, FULL_USAGE)
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  await clock.settle()
+
+  const fits = await mountBand($, 13, 13)
+  const tree = (await fits.drawn()) as Drawn
+  const sprite = pathHolding(tree, [MASCOT]).at(-1)
+  const rows = (sprite?.children ?? []).filter(isNode)
+  expect(rows).toHaveLength(4)
+  expect(rows.map(row => textOf(row).length)).toEqual([12, 12, 12, 12])
+  expect((sprite?.props as { flexShrink?: number } | undefined)?.flexShrink).toBe(0)
+  await fits.unmount()
+
+  const narrow = await mountBand($, 12, 12)
+  expect(await narrow.find({ text: MASCOT })).toBeUndefined()
+  expect(pathHolding((await narrow.drawn()) as Drawn, [MASCOT])).toHaveLength(0)
+  await narrow.unmount()
+})

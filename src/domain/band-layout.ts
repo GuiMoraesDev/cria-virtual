@@ -1,7 +1,12 @@
 import type { Info } from "../../types";
 import { meterBar, modelTag, quotaIcon } from "./session-info";
 
-export type BandStage = "row" | "quotas-below" | "info-column";
+export type BandStage =
+  | "row"
+  | "quotas-below"
+  | "info-column"
+  | "mascot-above"
+  | "no-mascot";
 
 const GAP = 2;
 const MASCOT = 13;
@@ -56,10 +61,13 @@ function quotasGroup(info: Info) {
 }
 
 export function bandLayout(columns: number, info: Info | null): BandStage {
+  if (columns < MASCOT) return "no-mascot";
   if (!info) return "row";
   const first = modelGroup(info) + GAP + branchGroup(info);
   const quotas = quotasGroup(info);
   if (first + (quotas ? GAP + quotas : 0) + MASCOT <= columns) return "row";
   if (first + MASCOT <= columns) return "quotas-below";
-  return "info-column";
+  const column = Math.max(modelGroup(info), branchGroup(info), quotasGroup(info));
+  if (column + MASCOT <= columns) return "info-column";
+  return "mascot-above";
 }
