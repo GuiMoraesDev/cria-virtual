@@ -76,9 +76,15 @@ test('quotaReset counts down the five_hour window', () => {
   expect(quotaReset('five_hour', now + 3 * 3_600_000 + 22 * 60_000, now)).toBe('3h22m')
 })
 
-test('quotaReset names the weekday and time for longer windows', () => {
-  const at = new Date(2026, 9, 27, 17, 59).getTime()
-  expect(quotaReset('seven_day', at, at - 86_400_000)).toBe('Tue 17:59')
+test('quotaReset counts down longer windows in days and hours', () => {
+  const now = Date.parse('2026-10-27T10:00:00Z')
+  expect(quotaReset('seven_day', now + 6 * 86_400_000 + 23 * 3_600_000 + 59 * 60_000, now)).toBe('6d23h')
+  expect(quotaReset('seven_day', now + 86_400_000, now)).toBe('1d0h')
+})
+
+test('quotaReset falls back to hours and minutes under a day', () => {
+  const now = Date.parse('2026-10-27T10:00:00Z')
+  expect(quotaReset('seven_day', now + 5 * 3_600_000 + 4 * 60_000, now)).toBe('5h04m')
 })
 
 test('quotaReset is empty once the window has passed or is unknown', () => {

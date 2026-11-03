@@ -13,8 +13,7 @@ const MASCOT = 13;
 const MARGIN = 1;
 const TIMER = 6;
 const CONTEXT_EMOJI = "😁";
-const SESSION_RESET = 6;
-const LONGER_RESET = 9;
+const RESET = 6;
 const RESET_PREFIX = " ⏳ ";
 
 // Emoji take two cells, everything else one.
@@ -54,7 +53,7 @@ function quotasGroup(info: Info) {
       resetsAt === null
         ? ""
         : RESET_PREFIX +
-          "0".repeat(kind === "five_hour" ? SESSION_RESET : LONGER_RESET);
+          "0".repeat(RESET);
     return `${quotaIcon(kind, percent)} ${label} ${Math.round(percent)}%${reset}`;
   });
   return widest(lines) + MARGIN;

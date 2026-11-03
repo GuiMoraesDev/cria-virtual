@@ -4,7 +4,7 @@ import type { Info } from '../../types'
 import { bandLayout } from './band-layout'
 
 // Cell widths, counting an emoji as 2 cells (the timer glyph included), a timer as 6 cells
-// and a quota reset as 6 (session) or 9 (weekly) cells when it has a reset time.
+// and a quota reset as 6 cells when it has a reset time.
 //   model/dir      "🧠 [opus-5.5 · high]" = 20, "📁 cria-virtual" = 15              -> 20
 //   branch/timer   "🌿 main" 7 + gap 2 + "⏱ " + timer 9 = 18; context line 17       -> 18, +1 margin = 19
 //   quotas         "😌 session 30%" 14, "📅 weekly 10%" 13                            -> 14, +1 margin = 15

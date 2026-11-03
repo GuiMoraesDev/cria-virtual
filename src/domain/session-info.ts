@@ -56,19 +56,19 @@ export function quotaIcon(kind: string, percent: number): string {
   return QUOTA_ICONS[kind] ?? "🎟";
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_MS = 86_400_000;
 
-// The short window reads as a countdown, longer ones as a weekday and time.
+// Every window reads as a countdown; one a day or more away drops to days and hours.
 export function quotaReset(
   kind: string,
   resetsAt: number | null,
   now: number,
 ): string {
   if (resetsAt === null || resetsAt <= now) return "";
-  if (kind === "five_hour") return humanDuration(resetsAt - now);
-  const d = new Date(resetsAt);
+  const left = resetsAt - now;
+  if (kind === "five_hour" || left < DAY_MS) return humanDuration(left);
 
-  return `${WEEKDAYS[d.getDay()]} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${Math.floor(left / DAY_MS)}d${Math.floor((left % DAY_MS) / 3_600_000)}h`;
 }
 
 export function meterBar(percent: number): string {
